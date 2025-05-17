@@ -8,6 +8,7 @@ body {
 }
 
 #game {
+	image-rendering:pixelated;
 	background:black;
 	margin: 0 auto;
 	margin-top: 40px;
