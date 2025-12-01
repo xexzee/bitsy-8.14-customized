@@ -162,7 +162,7 @@ function BitsySystem(name) {
 	graphics.setTextScale(textScale);
 	var initialPaletteSize = 64;
 	var tilePoolStart = null;
-	var tilePoolSize = 512;
+	var tilePoolSize = 1024;
 	// hack!!! (access for debugging)
 	this._graphics = graphics;
 
