@@ -4,7 +4,7 @@ var TransitionManager = function() {
 
 	var isTransitioning = false;
 	var transitionTime = 0; // milliseconds
-	var minStepTime = 125; // cap the frame rate
+	var minStepTime = 50; // cap the frame rate
 	var curStep = 0;
 
 	this.BeginTransition = function(startRoom, startX, startY, endRoom, endX, endY, effectName) {
@@ -12,45 +12,64 @@ var TransitionManager = function() {
 
 		curEffect = effectName;
 
-		var tmpRoom = player().room;
-		var tmpX = player().x;
-		var tmpY = player().y;
+		if(curEffect === 'crackle') {
+			document.querySelector('canvas').style.transition = 'all 8s';
+			document.querySelector('canvas').style.filter = 'hue-rotate(5760deg)';
+		}
 
+		// temporarily hide the actual player sprite
+		player().room = "_transition_none"; // kind of hacky!!
+
+		// save old room/position of current avatar sprite
+		let oldRoom = sprite[state.ava].room;
+        let oldX = sprite[state.ava].x;
+        let oldY = sprite[state.ava].y;
+
+		// if show player start is enabled, move current avatar sprite to the starting room/position
 		if (transitionEffects[curEffect].showPlayerStart) {
-			player().room = startRoom;
-			player().x = startX;
-			player().y = startY;
+			sprite[state.ava].room = startRoom;
+			sprite[state.ava].x = startX;
+			sprite[state.ava].y = startY;
 		}
 		else {
-			player().room = "_transition_none"; // kind of hacky!!
+			sprite[state.ava].room = "_transition_none"; 
 		}
 
+		// generate image of starting room 
 		var startRoomPixels = createRoomPixelBuffer(room[startRoom]);
 		var startPalette = getPal(room[startRoom].pal);
 		var startImage = new PostProcessImage(startRoomPixels);
 		transitionStart = new TransitionInfo(startImage, startPalette, startX, startY);
 
+		// if show player end is enabled, move current avatar sprite to the ending room/position
 		if (transitionEffects[curEffect].showPlayerEnd) {
-			player().room = endRoom;
-			player().x = endX;
-			player().y = endY;
+			sprite[state.ava].room = endRoom;
+			sprite[state.ava].x = endX;
+			sprite[state.ava].y = endY;
 		}
 		else {
-			player().room = "_transition_none";
+			sprite[state.ava].room = "_transition_none"; 
 		}
 
+		// generate image of ending room 
 		var endRoomPixels = createRoomPixelBuffer(room[endRoom]);
 		var endPalette = getPal(room[endRoom].pal);
 		var endImage = new PostProcessImage(endRoomPixels);
 		transitionEnd = new TransitionInfo(endImage, endPalette, endX, endY);
 
-		isTransitioning = true;
-		transitionTime = 0;
-		curStep = 0;
+		// move current avatar sprite back to its old position
+		sprite[state.ava].room = oldRoom;
+        sprite[state.ava].x = oldX;
+        sprite[state.ava].y = oldY;
 
+		// move the actual player sprite to the end room/position
 		player().room = endRoom;
 		player().x = endX;
 		player().y = endY;
+
+		isTransitioning = true;
+		transitionTime = 0;
+		curStep = 0;
 
 		bitsy.graphicsMode(bitsy.GFX_VIDEO);
 	}
@@ -94,6 +113,11 @@ var TransitionManager = function() {
 			transitionEnd = null;
 			curStep = 0;
 
+			if(curEffect === 'crackle') {
+				document.querySelector('canvas').style.transition = '';
+				document.querySelector('canvas').style.filter = '';
+			}
+
 			if (transitionCompleteCallback != null) {
 				transitionCompleteCallback();
 			}
@@ -129,9 +153,9 @@ var TransitionManager = function() {
 	});
 
 	this.RegisterTransitionEffect("fade_w", { // TODO : have it linger on full white briefly?
-		showPlayerStart : false,
-		showPlayerEnd : true,
-		stepCount : 6,
+		showPlayerStart : true,
+		showPlayerEnd : false,
+		stepCount : 12,
 		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
 			return delta < 0.5 ? start.Image.GetPixel(pixelX, pixelY) : end.Image.GetPixel(pixelX, pixelY);
 		},
@@ -158,9 +182,67 @@ var TransitionManager = function() {
 	});
 
 	this.RegisterTransitionEffect("fade_b", {
+		showPlayerStart : true,
+		showPlayerEnd : false,
+		stepCount : 12,
+		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
+			return delta < 0.5 ? start.Image.GetPixel(pixelX, pixelY) : end.Image.GetPixel(pixelX, pixelY);
+		},
+		paletteEffectFunc : function(start, end, delta) {
+			var colors = [];
+
+			if (delta < 0.5) {
+				delta = delta / 0.5;
+
+				for (var i = 0; i < start.Palette.length; i++) {
+					colors.push(lerpColor(start.Palette[i], [0, 0, 0], delta));
+				}
+			}
+			else {
+				delta = ((delta - 0.5) / 0.5);
+
+				for (var i = 0; i < end.Palette.length; i++) {
+					colors.push(lerpColor([0, 0, 0], end.Palette[i], delta));
+				}
+			}
+
+			return colors;
+		},
+	});
+
+	this.RegisterTransitionEffect("fade_w_showPlayerEnd", {
 		showPlayerStart : false,
 		showPlayerEnd : true,
-		stepCount : 6,
+		stepCount : 12,
+		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
+			return delta < 0.5 ? start.Image.GetPixel(pixelX, pixelY) : end.Image.GetPixel(pixelX, pixelY);
+		},
+		paletteEffectFunc : function(start, end, delta) {
+			var colors = [];
+
+			if (delta < 0.5) {
+				delta = delta / 0.5;
+
+				for (var i = 0; i < start.Palette.length; i++) {
+					colors.push(lerpColor(start.Palette[i], [255, 255, 255], delta));
+				}
+			}
+			else {
+				delta = ((delta - 0.5) / 0.5);
+
+				for (var i = 0; i < end.Palette.length; i++) {
+					colors.push(lerpColor([255, 255, 255], end.Palette[i], delta));
+				}
+			}
+
+			return colors;
+		},
+	});
+
+	this.RegisterTransitionEffect("fade_b_showPlayerEnd", {
+		showPlayerStart : false,
+		showPlayerEnd : true,
+		stepCount : 12,
 		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
 			return delta < 0.5 ? start.Image.GetPixel(pixelX, pixelY) : end.Image.GetPixel(pixelX, pixelY);
 		},
@@ -282,12 +364,30 @@ var TransitionManager = function() {
 		return colors;
 	}
 
+	this.RegisterTransitionEffect("crackle", {
+		showPlayerStart : true,
+		showPlayerEnd : true,
+		stepCount : 96,
+		fade: true,
+		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
+			let easedDelta = delta < 0.5 ? 4 * delta * delta * delta : 1 - Math.pow(-2 * delta + 2, 3) / 2; // easeInOutCubic
+			if(Math.random() < easedDelta) {
+				return end.Image.GetPixel(pixelX, pixelY);
+			}
+			else {
+				return start.Image.GetPixel(pixelX, pixelY);
+			}
+		},
+		paletteEffectFunc: lerpPalettes
+	});
+
 	this.RegisterTransitionEffect("slide_u", {
 		showPlayerStart : false,
 		showPlayerEnd : true,
-		stepCount : 8,
+		stepCount : 12,
 		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
-			var pixelOffset = -1 * Math.floor(start.Image.Height * delta);
+			var easedDelta = 1 - Math.pow(1 - delta, 3); // easeOutCubic
+			var pixelOffset = -1 * Math.floor(start.Image.Height * easedDelta);
 			var slidePixelY = pixelY + pixelOffset;
 
 			if (slidePixelY >= 0) {
@@ -304,9 +404,10 @@ var TransitionManager = function() {
 	this.RegisterTransitionEffect("slide_d", {
 		showPlayerStart : false,
 		showPlayerEnd : true,
-		stepCount : 8,
+		stepCount : 12,
 		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
-			var pixelOffset = Math.floor(start.Image.Height * delta);
+			var easedDelta = 1 - Math.pow(1 - delta, 3); // easeOutCubic
+			var pixelOffset = Math.floor(start.Image.Height * easedDelta);
 			var slidePixelY = pixelY + pixelOffset;
 
 			if (slidePixelY < start.Image.Height) {
@@ -323,9 +424,10 @@ var TransitionManager = function() {
 	this.RegisterTransitionEffect("slide_l", {
 		showPlayerStart : false,
 		showPlayerEnd : true,
-		stepCount : 8,
+		stepCount : 12,
 		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
-			var pixelOffset = -1 * Math.floor(start.Image.Width * delta);
+			var easedDelta = 1 - Math.pow(1 - delta, 3); // easeOutCubic
+			var pixelOffset = -1 * Math.floor(start.Image.Width * easedDelta);
 			var slidePixelX = pixelX + pixelOffset;
 
 			if (slidePixelX >= 0) {
@@ -342,9 +444,10 @@ var TransitionManager = function() {
 	this.RegisterTransitionEffect("slide_r", {
 		showPlayerStart : false,
 		showPlayerEnd : true,
-		stepCount : 8,
+		stepCount : 12,
 		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
-			var pixelOffset = Math.floor(start.Image.Width * delta);
+			var easedDelta = 1 - Math.pow(1 - delta, 3); // easeOutCubic
+			var pixelOffset = Math.floor(start.Image.Width * easedDelta);
 			var slidePixelX = pixelX + pixelOffset;
 
 			if (slidePixelX < start.Image.Width) {
