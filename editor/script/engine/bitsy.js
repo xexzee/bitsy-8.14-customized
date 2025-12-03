@@ -446,7 +446,7 @@ function updateInput() {
 			curPlayerDirection = Direction.None;
 		}
 
-		// if curPlayerDirection changed, update 'PLAYER_curPlayerDirection' variable
+		// if curPlayerDirection changed, update 'BITSY_curPlayerDirection' variable
 		if(curPlayerDirection != prevPlayerDirection) {
 			scriptInterpreter.SetVariable('BITSY_curPlayerDirection', curPlayerDirection);
 			if (curPlayerDirection != Direction.None) {
@@ -608,7 +608,7 @@ function movePlayer(direction, isFirstMove) {
 		}
 	}
 
-	// if bumpedIntoSpriteOrWall changed, update 'PLAYER_bumpedIntoSpriteOrWall' variable
+	// if bumpedIntoSpriteOrWall changed, update 'BITSY_bumpedIntoSpriteOrWall' variable
 	if(tryingToMoveIntoSpriteOrWall != bumpedIntoSpriteOrWall) {
 		bumpedIntoSpriteOrWall = tryingToMoveIntoSpriteOrWall;
 		scriptInterpreter.SetVariable('BITSY_bumpedIntoSpriteOrWall', bumpedIntoSpriteOrWall);
