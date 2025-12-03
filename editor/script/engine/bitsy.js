@@ -446,10 +446,14 @@ function updateInput() {
 			curPlayerDirection = Direction.None;
 		}
 
-		if (curPlayerDirection != Direction.None && curPlayerDirection != prevPlayerDirection) {
-			movePlayer(curPlayerDirection, true /* isFirstMove */);
-			playerHoldToMoveTimer = 500;
-			// playerHoldToMoveTimer = 32; // PERF TEST
+		// if curPlayerDirection changed, update 'PLAYER_curPlayerDirection' variable
+		if(curPlayerDirection != prevPlayerDirection) {
+			scriptInterpreter.SetVariable('BITSY_curPlayerDirection', curPlayerDirection);
+			if (curPlayerDirection != Direction.None) {
+				movePlayer(curPlayerDirection, true /* isFirstMove */);
+				playerHoldToMoveTimer = 500;
+				// playerHoldToMoveTimer = 32; // PERF TEST
+			}
 		}
 	}
 
@@ -561,6 +565,8 @@ var playerHoldToMoveTimer = 0;
 var playerPrevX = 0;
 var playerPrevY = 0;
 
+var bumpedIntoSpriteOrWall = false;
+
 function movePlayer(direction, isFirstMove) {
 	didPlayerMove = false;
 	var roomIds = Object.keys(room);
@@ -569,19 +575,43 @@ function movePlayer(direction, isFirstMove) {
 		return; // player room is missing or invalid.. can't move them!
 	}
 
-	var spr = null;
+	let spriteId = null;
+	let tryingToMoveIntoSpriteOrWall = false;
 
-	if (direction == Direction.Left && !(spr = getSpriteLeft()) && !isWallLeft()) {
-		player().x -= 1;
+	// determine where/if player moved based on direction and wall/sprite positions,
+	if (direction == Direction.Left) {
+		spriteId = getSpriteLeft();
+		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallLeft());
+		if (!tryingToMoveIntoSpriteOrWall) {
+			player().x -= 1;
+		}
 	}
-	else if (direction == Direction.Right && !(spr = getSpriteRight()) && !isWallRight()) {
-		player().x += 1;
+	else if (direction == Direction.Right) {
+		spriteId = getSpriteRight();
+		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallRight());
+		if(!tryingToMoveIntoSpriteOrWall) {
+			player().x += 1;
+		}
 	}
-	else if (direction == Direction.Up && !(spr = getSpriteUp()) && !isWallUp()) {
-		player().y -= 1;
+	else if (direction == Direction.Up) {
+		spriteId = getSpriteUp();
+		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallUp());
+		if(!tryingToMoveIntoSpriteOrWall) {
+			player().y -= 1;
+		}
 	}
-	else if (direction == Direction.Down && !(spr = getSpriteDown()) && !isWallDown()) {
-		player().y += 1;
+	else if (direction == Direction.Down) {
+		spriteId = getSpriteDown()
+		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallDown());
+		if(!tryingToMoveIntoSpriteOrWall) {
+			player().y += 1;
+		}
+	}
+
+	// if bumpedIntoSpriteOrWall changed, update 'PLAYER_bumpedIntoSpriteOrWall' variable
+	if(tryingToMoveIntoSpriteOrWall != bumpedIntoSpriteOrWall) {
+		bumpedIntoSpriteOrWall = tryingToMoveIntoSpriteOrWall;
+		scriptInterpreter.SetVariable('BITSY_bumpedIntoSpriteOrWall', bumpedIntoSpriteOrWall);
 	}
 
 	var ext = getExit( player().room, player().x, player().y );
@@ -626,13 +656,13 @@ function movePlayer(direction, isFirstMove) {
 	else if (ext) {
 		movePlayerThroughExit(ext);
 	}
-	else if (spr) {
+	else if (spriteId) {
 		// play sound on greet sprite
-		if (sprite[spr].blip != null) {
-			blipId = sprite[spr].blip;
+		if (sprite[spriteId].blip != null) {
+			blipId = sprite[spriteId].blip;
 		}
 
-		startSpriteDialog(spr /*spriteId*/);
+		startSpriteDialog(spriteId);
 	}
 
 	// TODO : maybe add in a future update?

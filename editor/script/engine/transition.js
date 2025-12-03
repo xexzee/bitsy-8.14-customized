@@ -13,8 +13,8 @@ var TransitionManager = function() {
 		curEffect = effectName;
 
 		if(curEffect === 'crackle') {
-			document.querySelector('canvas').style.transition = 'all 8s';
-			document.querySelector('canvas').style.filter = 'hue-rotate(5760deg)';
+			document.querySelector('canvas').style.transition = 'all 8s cubic-bezier(0.65, 0, 0.35, 1)';
+			document.querySelector('canvas').style.filter = 'hue-rotate(4320deg)';
 		}
 
 		// temporarily hide the actual player sprite
@@ -364,13 +364,22 @@ var TransitionManager = function() {
 		return colors;
 	}
 
+	function map(value, expectedMin, expectedMax, desiredMin, desiredMax) {
+		return (value - expectedMin) / (expectedMax - expectedMin) * (desiredMax - desiredMin) + desiredMin;
+	}
+
+	function clamp(value, min, max) {
+		return Math.min(Math.max(value, min), max);
+	};
+
 	this.RegisterTransitionEffect("crackle", {
 		showPlayerStart : true,
 		showPlayerEnd : true,
-		stepCount : 96,
+		stepCount : 120,
 		fade: true,
 		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
-			let easedDelta = delta < 0.5 ? 4 * delta * delta * delta : 1 - Math.pow(-2 * delta + 2, 3) / 2; // easeInOutCubic
+			let mappedDelta = map(delta, 0, 0.9333, 0, 1);
+			let easedDelta = mappedDelta < 0.5 ? 4 * mappedDelta * mappedDelta * mappedDelta : 1 - Math.pow(-2 * mappedDelta + 2, 3) / 2; // easeInOutCubic
 			if(Math.random() < easedDelta) {
 				return end.Image.GetPixel(pixelX, pixelY);
 			}
@@ -378,7 +387,7 @@ var TransitionManager = function() {
 				return start.Image.GetPixel(pixelX, pixelY);
 			}
 		},
-		paletteEffectFunc: lerpPalettes
+		paletteEffectFunc: (start, end, delta) => lerpPalettes(start, end, clamp(map(delta, 0, 0.9333, 0, 1), 0, 1))
 	});
 
 	this.RegisterTransitionEffect("slide_u", {

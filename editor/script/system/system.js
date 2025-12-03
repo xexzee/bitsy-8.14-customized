@@ -55,16 +55,19 @@ var textScale = 2;
 
 /* SYSTEM */
 var updateInterval = null;
-var prevTime = 0;
+var prevTime = null;
 var deltaTime = 0;
 
 function initSystem() {
-	prevTime = Date.now();
-	updateInterval = setInterval(updateSystem, 16);
+	window.requestAnimationFrame(updateSystem);
 }
 
-function updateSystem() {
-	var curTime = Date.now();
+function updateSystem(curTime) {
+
+	if(prevTime === null) {
+		prevTime = curTime;
+	}
+
 	deltaTime = curTime - prevTime;
 
 	// update all active processes
@@ -84,6 +87,8 @@ function updateSystem() {
 
 	bitsy = mainProcess.system;
 	prevTime = curTime;
+	
+	window.requestAnimationFrame(updateSystem);
 }
 
 function loadGame(canvas, gameData, defaultFontData) {
