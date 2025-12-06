@@ -347,6 +347,11 @@ function update(dt) {
 			playerCurY = player().y;
 			var didPlayerMove = (playerPrevX != playerCurX) || (playerPrevY != playerCurY);
 
+			if(didPlayerMove) {
+				scriptInterpreter.SetVariable('BITSY_playerX', player().x);
+				scriptInterpreter.SetVariable('BITSY_playerY', player().y);
+			}
+
 			drawRoom(room[state.room], { redrawAnimated: didAnimate, redrawAvatar: didPlayerMove });
 
 			// store player's position for next frame
@@ -583,7 +588,6 @@ function movePlayer(direction, isFirstMove) {
 		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallLeft());
 		if (!tryingToMoveIntoSpriteOrWall) {
 			player().x -= 1;
-			scriptInterpreter.SetVariable('BITSY_playerX', player().x);
 		}
 	}
 	else if (direction == Direction.Right) {
@@ -591,7 +595,6 @@ function movePlayer(direction, isFirstMove) {
 		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallRight());
 		if(!tryingToMoveIntoSpriteOrWall) {
 			player().x += 1;
-			scriptInterpreter.SetVariable('BITSY_playerX', player().x);
 		}
 	}
 	else if (direction == Direction.Up) {
@@ -599,7 +602,6 @@ function movePlayer(direction, isFirstMove) {
 		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallUp());
 		if(!tryingToMoveIntoSpriteOrWall) {
 			player().y -= 1;
-			scriptInterpreter.SetVariable('BITSY_playerY', player().y);
 		}
 	}
 	else if (direction == Direction.Down) {
@@ -607,7 +609,6 @@ function movePlayer(direction, isFirstMove) {
 		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallDown());
 		if(!tryingToMoveIntoSpriteOrWall) {
 			player().y += 1;
-			scriptInterpreter.SetVariable('BITSY_playerY', player().y);
 		}
 	}
 
