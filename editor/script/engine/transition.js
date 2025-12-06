@@ -67,6 +67,9 @@ var TransitionManager = function() {
 		player().x = endX;
 		player().y = endY;
 
+		playerPrevX = endX;
+		playerPrevY = endY;
+
 		isTransitioning = true;
 		transitionTime = 0;
 		curStep = 0;

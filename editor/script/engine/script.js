@@ -578,7 +578,7 @@ function exitFunc(environment, parameters, onReturn) {
 	if (parameters.length >= 4) {
 		var transitionEffect = parameters[3];
 
-		transition.BeginTransition(
+		transitionManager.BeginTransition(
 			player().room,
 			player().x,
 			player().y,
@@ -586,7 +586,7 @@ function exitFunc(environment, parameters, onReturn) {
 			destX,
 			destY,
 			transitionEffect);
-		transition.UpdateTransition(0);
+		transitionManager.UpdateTransition(0);
 	}
 
 	var movePlayerAndResumeScript = function() {
@@ -610,8 +610,8 @@ function exitFunc(environment, parameters, onReturn) {
 	};
 
 	// TODO : this doesn't play nice with pagebreak because it thinks the dialog is finished!
-	if (transition.IsTransitionActive()) {
-		transition.OnTransitionComplete(movePlayerAndResumeScript);
+	if (transitionManager.IsTransitionActive()) {
+		transitionManager.OnTransitionComplete(movePlayerAndResumeScript);
 	}
 	else {
 		movePlayerAndResumeScript();

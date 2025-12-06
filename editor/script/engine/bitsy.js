@@ -321,13 +321,13 @@ function update(dt) {
 		startNarrating( "", true /*isEnding*/ );
 	}
 
-	if (!transition || !transition.IsTransitionActive()) {
+	if (!transitionManager || !transitionManager.IsTransitionActive()) {
 		updateInput();
 	}
 
-	if (transition && transition.IsTransitionActive()) {
+	if (transitionManager && transitionManager.IsTransitionActive()) {
 		// transition animation takes over everything!
-		transition.UpdateTransition(dt);
+		transitionManager.UpdateTransition(dt);
 	}
 	else {
 		if (bitsy.graphicsMode() != bitsy.GFX_MAP) {
@@ -568,7 +568,6 @@ var playerPrevY = 0;
 var bumpedIntoSpriteOrWall = false;
 
 function movePlayer(direction, isFirstMove) {
-	didPlayerMove = false;
 	var roomIds = Object.keys(room);
 
 	if (player().room == null || roomIds.indexOf(player().room) < 0) {
@@ -584,6 +583,7 @@ function movePlayer(direction, isFirstMove) {
 		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallLeft());
 		if (!tryingToMoveIntoSpriteOrWall) {
 			player().x -= 1;
+			scriptInterpreter.SetVariable('BITSY_playerX', player().x);
 		}
 	}
 	else if (direction == Direction.Right) {
@@ -591,6 +591,7 @@ function movePlayer(direction, isFirstMove) {
 		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallRight());
 		if(!tryingToMoveIntoSpriteOrWall) {
 			player().x += 1;
+			scriptInterpreter.SetVariable('BITSY_playerX', player().x);
 		}
 	}
 	else if (direction == Direction.Up) {
@@ -598,6 +599,7 @@ function movePlayer(direction, isFirstMove) {
 		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallUp());
 		if(!tryingToMoveIntoSpriteOrWall) {
 			player().y -= 1;
+			scriptInterpreter.SetVariable('BITSY_playerY', player().y);
 		}
 	}
 	else if (direction == Direction.Down) {
@@ -605,6 +607,7 @@ function movePlayer(direction, isFirstMove) {
 		tryingToMoveIntoSpriteOrWall = (spriteId != null || isWallDown());
 		if(!tryingToMoveIntoSpriteOrWall) {
 			player().y += 1;
+			scriptInterpreter.SetVariable('BITSY_playerY', player().y);
 		}
 	}
 
@@ -680,15 +683,15 @@ function movePlayer(direction, isFirstMove) {
 	}
 }
 
-var transition;
+var transitionManager;
 if (engineFeatureFlags.isTransitionEnabled) {
-	transition = new TransitionManager();
+	transitionManager = new TransitionManager();
 }
 
 function movePlayerThroughExit(ext) {
 	var GoToDest = function() {
-		if (transition && ext.transition_effect != null) {
-			transition.BeginTransition(
+		if (transitionManager && ext.transition_effect != null) {
+			transitionManager.BeginTransition(
 				player().room,
 				player().x,
 				player().y,
@@ -697,9 +700,9 @@ function movePlayerThroughExit(ext) {
 				ext.dest.y,
 				ext.transition_effect);
 
-			transition.UpdateTransition(0);
+			transitionManager.UpdateTransition(0);
 
-			transition.OnTransitionComplete(function() {
+			transitionManager.OnTransitionComplete(function() {
 				player().room = ext.dest.room;
 				player().x = ext.dest.x;
 				player().y = ext.dest.y;
