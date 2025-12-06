@@ -481,13 +481,19 @@ var TransitionManager = function() {
 			pixelBuffer.push(tileColorStartIndex);
 		}
 
-		var drawTileInPixelBuffer = function(sourceData, frameIndex, colorIndex, tx, ty, pixelBuffer) {
+		var drawTileInPixelBuffer = function(sourceData, frameIndex, colorIndex, tx, ty, pixelBuffer, transparentBackground = false) {
 			var frameData = sourceData[frameIndex];
 
 			for (var y = 0; y < bitsy.TILE_SIZE; y++) {
 				for (var x = 0; x < bitsy.TILE_SIZE; x++) {
+
 					var color = tileColorStartIndex + (frameData[y][x] === 1 ? colorIndex : 0);
-					pixelBuffer[(((ty * bitsy.TILE_SIZE) + y) * bitsy.VIDEO_SIZE) + ((tx * bitsy.TILE_SIZE) + x)] = color;
+
+					// only fill in pixel data if the background isn't transparent, or if the pixel's color isn't the background color
+					if(!transparentBackground || color != tileColorStartIndex) {
+						pixelBuffer[(((ty * bitsy.TILE_SIZE) + y) * bitsy.VIDEO_SIZE) + ((tx * bitsy.TILE_SIZE) + x)] = color;
+					}
+					
 				}
 			}
 		}
@@ -533,7 +539,8 @@ var TransitionManager = function() {
 					spr.col,
 					spr.x,
 					spr.y,
-					pixelBuffer);
+					pixelBuffer,
+					spr.bgc < 0);
 			}
 		}
 
