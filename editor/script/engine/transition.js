@@ -17,22 +17,14 @@ var TransitionManager = function() {
 			document.querySelector('canvas').style.filter = 'hue-rotate(4320deg)';
 		}
 
-		// temporarily hide the actual player sprite
-		player().room = "_transition_none"; // kind of hacky!!
-
-		// save old room/position of current avatar sprite
-		let oldRoom = sprite[state.ava].room;
-        let oldX = sprite[state.ava].x;
-        let oldY = sprite[state.ava].y;
-
 		// if show player start is enabled, move current avatar sprite to the starting room/position
 		if (transitionEffects[curEffect].showPlayerStart) {
-			sprite[state.ava].room = startRoom;
-			sprite[state.ava].x = startX;
-			sprite[state.ava].y = startY;
+			player().room = startRoom;
+			player().x = startX;
+			player().y = startY;
 		}
 		else {
-			sprite[state.ava].room = "_transition_none"; 
+			player().room = "_transition_none";
 		}
 
 		// generate image of starting room 
@@ -41,14 +33,19 @@ var TransitionManager = function() {
 		var startImage = new PostProcessImage(startRoomPixels);
 		transitionStart = new TransitionInfo(startImage, startPalette, startX, startY);
 
+		if(room[endRoom].ava) {
+			state.ava = room[endRoom].ava;
+		}
+
+		player().x = endX;
+		player().y = endY;
+
 		// if show player end is enabled, move current avatar sprite to the ending room/position
 		if (transitionEffects[curEffect].showPlayerEnd) {
-			sprite[state.ava].room = endRoom;
-			sprite[state.ava].x = endX;
-			sprite[state.ava].y = endY;
+			player().room = endRoom;
 		}
 		else {
-			sprite[state.ava].room = "_transition_none"; 
+			player().room = "_transition_none"; 
 		}
 
 		// generate image of ending room 
@@ -56,16 +53,9 @@ var TransitionManager = function() {
 		var endPalette = getPal(room[endRoom].pal);
 		var endImage = new PostProcessImage(endRoomPixels);
 		transitionEnd = new TransitionInfo(endImage, endPalette, endX, endY);
-
-		// move current avatar sprite back to its old position
-		sprite[state.ava].room = oldRoom;
-        sprite[state.ava].x = oldX;
-        sprite[state.ava].y = oldY;
-
+		
 		// move the actual player sprite to the end room/position
 		player().room = endRoom;
-		player().x = endX;
-		player().y = endY;
 
 		playerPrevX = endX;
 		playerPrevY = endY;
@@ -529,10 +519,23 @@ var TransitionManager = function() {
 				pixelBuffer);
 		}
 
+		let player = player();
+		let playerX = player ? player().x : null;
+		let playerY = player ? player().y : null;
+		let playerAvatarSpriteId = state.ava;
+
+		let drawPlayer = player().room === room.id;
+
 		//draw sprites
 		for (id in sprite) {
 			var spr = sprite[id];
 			if (spr.room === room.id) {
+
+				// skip player sprite
+				if(drawPlayer && spr.x === playerX && spr.y === playerY) {
+					continue;
+				}
+
 				drawTileInPixelBuffer(
 					renderer.GetDrawingSource(spr.drw),
 					spr.animation.frameIndex,
@@ -541,7 +544,34 @@ var TransitionManager = function() {
 					spr.y,
 					pixelBuffer,
 					spr.bgc < 0);
+
 			}
+		}
+
+		if(drawPlayer) {
+			
+			// draw outline
+			let currentOutlineRegions = OUTLINE_REGIONS[playerAvatarSpriteId];
+			if(currentOutlineRegions) {
+				currentOutlineRegions[sprite[playerAvatarSpriteId].animation.frameIndex].forEach(region => {
+					for(let i = 0; i < region.height; i++) {
+						let fillStartIndex = (playerY * bitsy.TILE_SIZE + region.y + i) * bitsy.VIDEO_SIZE + (playerX * bitsy.TILE_SIZE + region.x);
+						pixelBuffer.fill(tileColorStartIndex, fillStartIndex, fillStartIndex + region.width);
+					}
+				});
+			}
+
+			// draw player sprite
+			let playerSprite = sprite[playerAvatarSpriteId];
+			drawTileInPixelBuffer(
+				renderer.GetDrawingSource(playerSprite.drw),
+				playerSprite.animation.frameIndex,
+				playerSprite.col,
+				playerX,
+				playerY,
+				pixelBuffer,
+				playerSprite.bgc < 0);
+
 		}
 
 		return pixelBuffer;

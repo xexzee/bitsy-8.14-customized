@@ -1,3 +1,93 @@
+/* OUTLINE */
+/* defines regions of the canvas to block out behind the player's current position, */
+/* grouped according to the ID of the currently active avatar sprite */
+const OUTLINE_REGIONS = {
+	'5v': [
+		[ // first frame
+			{
+				x: 1, // x relative to current player position, measured in pixels 
+				y: -1,  // y relative to current player position, measured in pixels
+				width: 5, // width measured in pixels
+				height: 6 // height measured in pixels
+			},
+			{
+				x: 2,
+				y: 1,
+				width: 5,
+				height: 8
+			},
+			{
+				x: 6,
+				y: 2,
+				width: 2,
+				height: 5
+			}
+		],
+		[ // second frame
+			{
+				x: 1,
+				y: 0,
+				width: 5,
+				height: 6
+			},
+			{
+				x: 2,
+				y: 2,
+				width: 5,
+				height: 7
+			},
+			{
+				x: 6,
+				y: 3,
+				width: 2,
+				height: 5
+			}
+		]
+	],
+	'mh': [
+		[
+			{
+				x: 2,
+				y: -1,
+				width: 5,
+				height: 6
+			},
+			{
+				x: 1,
+				y: 1,
+				width: 5,
+				height: 8
+			},
+			{
+				x: 0,
+				y: 2,
+				width: 2,
+				height: 5
+			}
+		],
+		[
+			{
+				x: 2,
+				y: 0,
+				width: 5,
+				height: 6
+			},
+			{
+				x: 1,
+				y: 2,
+				width: 5,
+				height: 7
+			},
+			{
+				x: 0,
+				y: 3,
+				width: 2,
+				height: 5
+			}
+		]
+	],
+}
+
 /* LOGGING */
 var DebugLogCategory = {
 	// system
@@ -305,28 +395,88 @@ function BitsySystem(name) {
 			}
 		}
 		else if (mode === self.GFX_MAP) {
+			
 			// redraw any changed layers
 			var layers = self._getTileMapLayers();
 			var anyMapLayerChanged = false;
+
+			let player = player();
+			let playerX = player ? player.x : null;
+			let playerY = player ? player.y : null;
+			let playerAvatarSpriteId = state.ava;
+
 			for (var i = 0; i < layers.length; i++) {
+
 				var layerId = layers[i];
+
 				if (memory.changed[layerId]) {
+
 					// need to redraw this map layer
 					anyMapLayerChanged = true;
+
 					// clear layer canvas
 					graphics.setImageFill(layerId, 0); // fill transparent
 					graphics.createImage(layerId, self.VIDEO_SIZE, self.VIDEO_SIZE, []);
+
 					// render tiles onto layer canvas
 					var layerData = self._dump()[layerId];
 					for (var ty = 0; ty < self.MAP_SIZE; ty++) {
 						for (var tx = 0; tx < self.MAP_SIZE; tx++) {
+
+							// skip drawing if this is the player's tile (always draw player last to support outline step)
+							if(playerX === tx && playerY === ty && layerId === bitsy.MAP2) {
+								continue;
+							}
+
 							var tileIndex = (ty * self.MAP_SIZE) + tx;
 							var tile = layerData[tileIndex];
 							if (tile > 0) {
 								graphics.drawImage(tile, tx * self.TILE_SIZE, ty * self.TILE_SIZE, layerId);
 							}
+
 						}
 					}
+
+					if(layerId === bitsy.MAP2 && player) {
+
+						// draw outline
+						let currentOutlineRegions = OUTLINE_REGIONS[playerAvatarSpriteId];
+						if(currentOutlineRegions) {
+
+							let targetLayerCanvas = graphics._images[layerId];
+							let targetLayerCanvasDrawingContext = targetLayerCanvas.getContext("2d");
+
+							let oldFillStyle = targetLayerCanvasDrawingContext.fillStyle;
+
+							let currentBackgroundColorAsHexString = '#';
+							let currentBackgroundColor = palette[state.pal].colors[0];
+							currentBackgroundColor.forEach(rgbValueAsInt => {
+								currentBackgroundColorAsHexString += rgbValueAsInt.toString(16).padStart(2, '0');
+							});
+
+							targetLayerCanvasDrawingContext.fillStyle = currentBackgroundColorAsHexString;
+
+							currentOutlineRegions[sprite[playerAvatarSpriteId].animation.frameIndex].forEach(region => {
+								targetLayerCanvasDrawingContext.fillRect(
+									(playerX * 8 + region.x) * scale,
+									(playerY * 8 + region.y) * scale,
+									region.width * scale,
+									region.height * scale);
+							});
+
+							targetLayerCanvasDrawingContext.fillStyle = oldFillStyle;
+
+						}
+
+						// draw player tile
+						var tileIndex = (playerY * self.MAP_SIZE) + playerX;
+						var tile = layerData[tileIndex];
+						if (tile > 0) {
+							graphics.drawImage(tile, playerX * self.TILE_SIZE, playerY * self.TILE_SIZE, layerId);
+						}
+
+					}
+
 				}
 			}
 
