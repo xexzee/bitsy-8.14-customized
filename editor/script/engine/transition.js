@@ -519,9 +519,8 @@ var TransitionManager = function() {
 				pixelBuffer);
 		}
 
-		let player = player();
-		let playerX = player ? player().x : null;
-		let playerY = player ? player().y : null;
+		let playerX = player() ? player().x : null;
+		let playerY = player() ? player().y : null;
 		let playerAvatarSpriteId = state.ava;
 
 		let drawPlayer = player().room === room.id;

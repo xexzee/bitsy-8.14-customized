@@ -400,9 +400,8 @@ function BitsySystem(name) {
 			var layers = self._getTileMapLayers();
 			var anyMapLayerChanged = false;
 
-			let player = player();
-			let playerX = player ? player.x : null;
-			let playerY = player ? player.y : null;
+			let playerX = player() ? player().x : null;
+			let playerY = player() ? player().y : null;
 			let playerAvatarSpriteId = state.ava;
 
 			for (var i = 0; i < layers.length; i++) {
