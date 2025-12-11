@@ -550,9 +550,9 @@ var TransitionManager = function() {
 		if(drawPlayer) {
 			
 			// draw outline
-			let currentOutlineRegions = OUTLINE_REGIONS[playerAvatarSpriteId];
+			let currentOutlineRegions = OUTLINES.filter(outline => outline.spriteIds.includes(playerAvatarSpriteId))[0];
 			if(currentOutlineRegions) {
-				currentOutlineRegions[sprite[playerAvatarSpriteId].animation.frameIndex].forEach(region => {
+				currentOutlineRegions.drawRegions[sprite[playerAvatarSpriteId].animation.frameIndex].forEach(region => {
 					for(let i = 0; i < region.height; i++) {
 						let fillStartIndex = (playerY * bitsy.TILE_SIZE + region.y + i) * bitsy.VIDEO_SIZE + (playerX * bitsy.TILE_SIZE + region.x);
 						pixelBuffer.fill(tileColorStartIndex, fillStartIndex, fillStartIndex + region.width);

@@ -1,93 +1,3 @@
-/* OUTLINE */
-/* defines regions of the canvas to block out behind the player's current position, */
-/* grouped according to the ID of the currently active avatar sprite */
-const OUTLINE_REGIONS = {
-	'5v': [
-		[ // first frame
-			{
-				x: 1, // x relative to current player position, measured in pixels 
-				y: -1,  // y relative to current player position, measured in pixels
-				width: 5, // width measured in pixels
-				height: 6 // height measured in pixels
-			},
-			{
-				x: 2,
-				y: 1,
-				width: 5,
-				height: 8
-			},
-			{
-				x: 6,
-				y: 2,
-				width: 2,
-				height: 5
-			}
-		],
-		[ // second frame
-			{
-				x: 1,
-				y: 0,
-				width: 5,
-				height: 6
-			},
-			{
-				x: 2,
-				y: 2,
-				width: 5,
-				height: 7
-			},
-			{
-				x: 6,
-				y: 3,
-				width: 2,
-				height: 5
-			}
-		]
-	],
-	'mh': [
-		[
-			{
-				x: 2,
-				y: -1,
-				width: 5,
-				height: 6
-			},
-			{
-				x: 1,
-				y: 1,
-				width: 5,
-				height: 8
-			},
-			{
-				x: 0,
-				y: 2,
-				width: 2,
-				height: 5
-			}
-		],
-		[
-			{
-				x: 2,
-				y: 0,
-				width: 5,
-				height: 6
-			},
-			{
-				x: 1,
-				y: 2,
-				width: 5,
-				height: 7
-			},
-			{
-				x: 0,
-				y: 3,
-				width: 2,
-				height: 5
-			}
-		]
-	],
-}
-
 /* LOGGING */
 var DebugLogCategory = {
 	// system
@@ -439,7 +349,7 @@ function BitsySystem(name) {
 					if(layerId === bitsy.MAP2 && player) {
 
 						// draw outline
-						let currentOutlineRegions = OUTLINE_REGIONS[playerAvatarSpriteId];
+						let currentOutlineRegions = OUTLINES.filter(outline => outline.spriteIds.includes(playerAvatarSpriteId))[0];
 						if(currentOutlineRegions) {
 
 							let targetLayerCanvas = graphics._images[layerId];
@@ -453,14 +363,21 @@ function BitsySystem(name) {
 								currentBackgroundColorAsHexString += rgbValueAsInt.toString(16).padStart(2, '0');
 							});
 
-							targetLayerCanvasDrawingContext.fillStyle = currentBackgroundColorAsHexString;
+							currentOutlineRegions.drawRegions[sprite[playerAvatarSpriteId].animation.frameIndex].forEach(region => {
 
-							currentOutlineRegions[sprite[playerAvatarSpriteId].animation.frameIndex].forEach(region => {
+								if(region.color) {
+									targetLayerCanvasDrawingContext.fillStyle = region.color;
+								}
+								else {
+									targetLayerCanvasDrawingContext.fillStyle = currentBackgroundColorAsHexString;
+								}
+
 								targetLayerCanvasDrawingContext.fillRect(
 									(playerX * 8 + region.x) * scale,
 									(playerY * 8 + region.y) * scale,
 									region.width * scale,
 									region.height * scale);
+
 							});
 
 							targetLayerCanvasDrawingContext.fillStyle = oldFillStyle;

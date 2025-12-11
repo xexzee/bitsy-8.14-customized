@@ -17,6 +17,7 @@ var resourceFiles = [
 	"resources/export/exportStyleFixed.css",
 	"resources/export/exportStyleFull.css",
 	/* system scripts */
+	"../editor/script/system/outlines.js",
 	"../editor/script/system/input.js",
 	"../editor/script/system/soundchip.js",
 	"../editor/script/system/graphics.js",
