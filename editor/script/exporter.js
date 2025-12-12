@@ -28,6 +28,7 @@ this.exportGame = function(gameData, title, pageColor, filename, isFixedSize, si
 
 	html = replaceTemplateMarker( html, "@@B", pageColor );
 
+	html = replaceTemplateMarker( html, "@@OUTLINES", Resources["outlines.js"] );
 	html = replaceTemplateMarker( html, "@@I", Resources["input.js"] );
 	html = replaceTemplateMarker( html, "@@P", Resources["soundchip.js"] );
 	html = replaceTemplateMarker( html, "@@G", Resources["graphics.js"] );

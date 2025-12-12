@@ -15,6 +15,7 @@ var TransitionManager = function() {
 		if(curEffect === 'crackle') {
 			document.querySelector('canvas').style.transition = 'all 8s cubic-bezier(0.65, 0, 0.35, 1)';
 			document.querySelector('canvas').style.filter = 'hue-rotate(4320deg)';
+			animationTime = 500;
 		}
 
 		// if show player start is enabled, move current avatar sprite to the starting room/position
@@ -27,8 +28,16 @@ var TransitionManager = function() {
 			player().room = "_transition_none";
 		}
 
+		// use hallway1 as start room if the actual start room is hallway1 waterfall left 2 or hallway1 waterfall right 2
+		var startRoomPixels = null;
+		if(startRoom === '6c' || startRoom === '6e') {
+			startRoomPixels = createRoomPixelBuffer(room['35']);
+		}
+		else {
+			startRoomPixels = createRoomPixelBuffer(room[startRoom]);
+		}
+
 		// generate image of starting room 
-		var startRoomPixels = createRoomPixelBuffer(room[startRoom]);
 		var startPalette = getPal(room[startRoom].pal);
 		var startImage = new PostProcessImage(startRoomPixels);
 		transitionStart = new TransitionInfo(startImage, startPalette, startX, startY);
@@ -369,7 +378,23 @@ var TransitionManager = function() {
 		showPlayerStart : true,
 		showPlayerEnd : true,
 		stepCount : 120,
-		fade: true,
+		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
+			let mappedDelta = map(delta, 0, 0.9333, 0, 1);
+			let easedDelta = mappedDelta < 0.5 ? 4 * mappedDelta * mappedDelta * mappedDelta : 1 - Math.pow(-2 * mappedDelta + 2, 3) / 2; // easeInOutCubic
+			if(Math.random() < easedDelta) {
+				return end.Image.GetPixel(pixelX, pixelY);
+			}
+			else {
+				return start.Image.GetPixel(pixelX, pixelY);
+			}
+		},
+		paletteEffectFunc: (start, end, delta) => lerpPalettes(start, end, clamp(map(delta, 0, 0.9333, 0, 1), 0, 1))
+	});
+
+	this.RegisterTransitionEffect("crackle2", {
+		showPlayerStart : false,
+		showPlayerEnd : true,
+		stepCount : 6,
 		pixelEffectFunc : function(start, end, pixelX, pixelY, delta) {
 			let mappedDelta = map(delta, 0, 0.9333, 0, 1);
 			let easedDelta = mappedDelta < 0.5 ? 4 * mappedDelta * mappedDelta * mappedDelta : 1 - Math.pow(-2 * mappedDelta + 2, 3) / 2; // easeInOutCubic
